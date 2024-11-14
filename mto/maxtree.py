@@ -1,14 +1,17 @@
 """Build a maxtree from a numpy array."""
 
 import ctypes as ct
-import numpy.ctypeslib as npct
-import numpy as np
+from pathlib import Path
 
-from mtolib import _ctype_classes as mt_class
+import numpy as np
+import numpy.ctypeslib as npct
+
+from mto import _ctype_classes as mt_class
 
 
 class MaxTree:
     """A container class for the C maxtree"""
+
     def __init__(self, image, verbosity):
         self.image = image
         self.verbosity = verbosity
@@ -29,11 +32,13 @@ class MaxTree:
         # Create image object
         img_pointer = self.image.ravel().ctypes.data_as(ct.POINTER(params.d_type))
 
-        return mt_class.MtData(root=self.root,
-                               nodes=self.nodes,
-                               node_attributes=self.node_attributes,
-                               img=mt_class.Image(img_pointer, *self.image.shape, self.image.size),
-                               verbosity_level = self.verbosity)
+        return mt_class.MtData(
+            root=self.root,
+            nodes=self.nodes,
+            node_attributes=self.node_attributes,
+            img=mt_class.Image(img_pointer, *self.image.shape, self.image.size),
+            verbosity_level=self.verbosity,
+        )
 
 
 class OriginalMaxTree(MaxTree):
@@ -43,11 +48,11 @@ class OriginalMaxTree(MaxTree):
         MaxTree.__init__(self, image, verbosity)
 
         # Get access to the compiled C maxtree library
+        module_dir = Path(__file__).resolve().parents[0]
         if params.d_type == ct.c_double:
-            self.mt_lib = ct.CDLL('mtolib/lib/maxtree_double.so')
+            self.mt_lib = ct.CDLL(module_dir / "clib/maxtree_double.so")
         else:
-            self.mt_lib = ct.CDLL('mtolib/lib/maxtree.so')
-
+            self.mt_lib = ct.CDLL(module_dir / "/clib/maxtree.so")
 
         # Create image object
         img_pointer = image.ravel().ctypes.data_as(ct.POINTER(params.d_type))
@@ -58,13 +63,18 @@ class OriginalMaxTree(MaxTree):
         self.mt = mt_class.MtData()
 
         # Set argument types for init function; Initialise max tree.
-        self.mt_lib.mt_init.argtypes = (ct.POINTER(mt_class.MtData), ct.POINTER(mt_class.Image))
+        self.mt_lib.mt_init.argtypes = (
+            ct.POINTER(mt_class.MtData),
+            ct.POINTER(mt_class.Image),
+        )
 
         self.mt_lib.mt_init(ct.byref(self.mt), ct.byref(c_img))
 
         # Set verbosity
-        self.mt_lib.mt_set_verbosity_level.argtypes = (ct.POINTER(mt_class.MtData),
-                                                  ct.c_int)
+        self.mt_lib.mt_set_verbosity_level.argtypes = (
+            ct.POINTER(mt_class.MtData),
+            ct.c_int,
+        )
         self.mt_lib.mt_set_verbosity_level(ct.byref(self.mt), verbosity)
 
     def flood(self):

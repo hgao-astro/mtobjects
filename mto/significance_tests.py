@@ -1,7 +1,7 @@
 """Statistical tests for max tree filtering."""
 
 from scipy import stats
-from mtolib._ctype_classes import SIGTEST_TYPE, INIT_TYPE
+from mto._ctype_classes import SIGTEST_TYPE, INIT_TYPE
 import numpy as np
 
 
@@ -10,6 +10,7 @@ NO_PARENT = -3
 
 class SignificanceTest:
     """A container class for statistical tests on the maxtree."""
+
     def __init__(self, test_function, init_function):
         self.test = SIGTEST_TYPE(test_function)
         self.init_test = INIT_TYPE(init_function)
@@ -22,6 +23,7 @@ class SignificanceTest:
 
 class MtoAccess:
     """Wrapper for mto objects, to simplify python data access."""
+
     def __init__(self, mto):
         self.mto = mto.contents
         self.mt = self.mto.mt.contents
@@ -36,7 +38,7 @@ class MtoAccess:
         self.main_power_branches = self.mto.main_power_branches
 
         self.paras = self.mto.paras.contents
-        self.sqr_gain = self.paras.gain ** 2
+        self.sqr_gain = self.paras.gain**2
         self.std = np.sqrt(self.paras.bg_variance)
 
         self.sig_level = self.paras.alpha
@@ -74,5 +76,4 @@ class MtoAccess:
 
 def default_sig_test(mto_lib):
     """Return the default (original) significance test"""
-    return SignificanceTest(mto_lib.mt_node_test_4,
-                            mto_lib.mt_use_node_test_4)
+    return SignificanceTest(mto_lib.mt_node_test_4, mto_lib.mt_use_node_test_4)

@@ -1,15 +1,18 @@
 """Filter a maxtree."""
 
 import ctypes as ct
+from pathlib import Path
+
 import numpy as np
 
-import mtolib.significance_tests as mt_sig
-from mtolib import _ctype_classes as mt_class
-from mtolib.utils import time_function
+import mto.significance_tests as mt_sig
+from mto import _ctype_classes as mt_class
+from mto.utils import time_function
 
 # Get access to the compiled C maxtree library
 # Defaults to float version
-mto_lib = ct.CDLL('mtolib/lib/mt_objects.so')
+module_dir = Path(__file__).resolve().parents[0]
+mto_lib = ct.CDLL(module_dir / "clib/mt_objects.so")
 
 
 def init_double_filtering(params):
@@ -18,7 +21,7 @@ def init_double_filtering(params):
 
     # If the image is 64 bit, use the double version of the library
     if params.d_type == ct.c_double:
-        mto_lib = ct.CDLL('mtolib/lib/mt_objects_double.so')
+        mto_lib = ct.CDLL(module_dir / "clib/mt_objects_double.so")
 
 
 def up_tree():
@@ -44,18 +47,24 @@ def get_c_significant_nodes(lib_name):
     return mt_class.SIGNODES_TYPE(c_lib.significant_nodes)
 
 
-def filter_tree(mt_in, image, params, sig_test=default_sig_test,
-                sig_nodes_function=up_tree):
+def filter_tree(
+    mt_in, image, params, sig_test=default_sig_test, sig_nodes_function=up_tree
+):
     if params.verbosity:
         print("\n---Finding Objects---")
-    return time_function(filter_tree_timed, (mt_in, image, params, sig_test, sig_nodes_function),
-                         params.verbosity, 'find objects')
+    return time_function(
+        filter_tree_timed,
+        (mt_in, image, params, sig_test, sig_nodes_function),
+        params.verbosity,
+        "find objects",
+    )
 
 
-def filter_tree_timed(mt_in, image, params, sig_test=default_sig_test,
-                sig_nodes_function=up_tree):
+def filter_tree_timed(
+    mt_in, image, params, sig_test=default_sig_test, sig_nodes_function=up_tree
+):
     """Filter a maxtree using a given significance test and processing method,
-     and return an object id map"""
+    and return an object id map"""
 
     # Convert the maxtree object for ctypes compatibility
     mt = mt_in.ctypes_maxtree()
@@ -68,7 +77,7 @@ def filter_tree_timed(mt_in, image, params, sig_test=default_sig_test,
     id_pointer = object_ids.ctypes.data_as(object_id_type)
 
     # Ditto for significant ancestors
-    sig_ancs = np.zeros(image.shape, dtype=ct.c_int32) -3
+    sig_ancs = np.zeros(image.shape, dtype=ct.c_int32) - 3
     sig_anc_pointer = sig_ancs.ctypes.data_as(object_id_type)
 
     # Get up/down tree functions if necessary
@@ -82,18 +91,25 @@ def filter_tree_timed(mt_in, image, params, sig_test=default_sig_test,
         sig_test = default_sig_test()
 
     # Create a parameters object
-    mto_params = mt_class.MtParameters(bg_variance=params.bg_variance, gain=params.gain,
-                                       move_factor=params.move_factor, alpha=params.alpha,
-                                       verbosity=params.verbosity, min_distance=params.min_distance)
-
+    mto_params = mt_class.MtParameters(
+        bg_variance=params.bg_variance,
+        gain=params.gain,
+        move_factor=params.move_factor,
+        alpha=params.alpha,
+        verbosity=params.verbosity,
+        min_distance=params.min_distance,
+    )
 
     # Create the MTO struct and a pointer
     # Avoids bizarre memory management issues - creating it in C seems to go very wrong
-    mto_struct = mt_class.MtObjectData(object_ids=id_pointer, mt=ct.pointer(mt),
-                                       paras=ct.pointer(mto_params),
-                                       significant_nodes=sig_nodes_function,
-                                       node_significance_test=sig_test.test,
-                                       closest_significant_ancestors=sig_anc_pointer)
+    mto_struct = mt_class.MtObjectData(
+        object_ids=id_pointer,
+        mt=ct.pointer(mt),
+        paras=ct.pointer(mto_params),
+        significant_nodes=sig_nodes_function,
+        node_significance_test=sig_test.test,
+        closest_significant_ancestors=sig_anc_pointer,
+    )
 
     mto_pointer = ct.pointer(mto_struct)
 

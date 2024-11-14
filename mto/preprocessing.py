@@ -4,7 +4,7 @@ import numpy as np
 from scipy import stats
 import scipy.ndimage.filters as filters
 
-from mtolib import background, utils
+from mto import background, utils
 
 
 def preprocess_image(img, p, gaussian_blur=True, n=2, nan_value=np.inf):
@@ -31,11 +31,16 @@ def estimate_background(img, p):
 
         if np.isnan(img).any():
             if p.verbosity > 0:
-                print("WARNING: image contains NAN values which may affect output parameters")
+                print(
+                    "WARNING: image contains NAN values which may affect output parameters"
+                )
 
-        bg_mean_tmp, bg_variance_tmp = utils.time_function(background.estimate_bg,
-                                                           (img, p.verbosity), p.verbosity,
-                                                           "estimate background")
+        bg_mean_tmp, bg_variance_tmp = utils.time_function(
+            background.estimate_bg,
+            (img, p.verbosity),
+            p.verbosity,
+            "estimate background",
+        )
 
         if p.bg_mean is None:
             p.bg_mean = bg_mean_tmp

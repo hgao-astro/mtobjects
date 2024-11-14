@@ -2,7 +2,7 @@
 
 import numpy as np
 from scipy import stats
-from mtolib.utils import time_function
+from mto.utils import time_function
 
 _REJECT_TILE = False
 _ACCEPT_TILE = True
@@ -34,9 +34,11 @@ def estimate_bg(img, verbosity=1, rejection_rate=0.05):
     return collect_info(img, tile_size, rejection_rate, verbosity)
 
 
-def largest_flat_tile(img, sig_level, tile_size_start=6, tile_size_min=4, tile_size_max=7):
+def largest_flat_tile(
+    img, sig_level, tile_size_start=6, tile_size_min=4, tile_size_max=7
+):
     """Find an image's largest flat tile.
-       Tile_size values --> 2^tile_size - i.e. parameters should be exponents.
+    Tile_size values --> 2^tile_size - i.e. parameters should be exponents.
     """
 
     # Convert exponents to sizes
@@ -50,7 +52,7 @@ def largest_flat_tile(img, sig_level, tile_size_start=6, tile_size_min=4, tile_s
             current_size *= 2
             if not available_tiles(img, current_size, sig_level):
                 # Return the last level with flat tiles available
-                return int(current_size/2)
+                return int(current_size / 2)
         # Return the maximum tile size if no limit has been found
         return max_size
     else:
@@ -70,9 +72,11 @@ def available_tiles(img, tile_length, sig_level):
 
     # Iterate over tiles
     for y in range(0, img.shape[0] - tile_length, tile_length):
-        for x in range(0,img.shape[1]-tile_length, tile_length):
+        for x in range(0, img.shape[1] - tile_length, tile_length):
             # Test each tile for flatness
-            if check_tile_is_flat(img[y:y+tile_length,x:x+tile_length], sig_level):
+            if check_tile_is_flat(
+                img[y : y + tile_length, x : x + tile_length], sig_level
+            ):
                 return True
     return False
 
@@ -82,12 +86,14 @@ def collect_info(img, tile_length, rejection_rate, verbosity=1):
 
     flat_tiles = []
 
-    for y in range(0, img.shape[0]-tile_length, tile_length):
-        for x in range(0,img.shape[1]-tile_length, tile_length):
+    for y in range(0, img.shape[0] - tile_length, tile_length):
+        for x in range(0, img.shape[1] - tile_length, tile_length):
             # Test each tile for flatness
-            if check_tile_is_flat(img[y:y+tile_length, x:x+tile_length], rejection_rate):
+            if check_tile_is_flat(
+                img[y : y + tile_length, x : x + tile_length], rejection_rate
+            ):
                 # If flat, add to list
-                flat_tiles.append([x,y])
+                flat_tiles.append([x, y])
 
     if verbosity:
         print("Number of usable tiles:", len(flat_tiles))
@@ -127,12 +133,11 @@ def check_tile_means(tile, sig_level):
     half_width = int(tile.shape[1] / 2)
 
     # Top and bottom - if means unequal, reject tile
-    if not test_mean_equality(tile[:half_height,:], tile[half_height:,:], sig_level):
+    if not test_mean_equality(tile[:half_height, :], tile[half_height:, :], sig_level):
         return _REJECT_TILE
 
     # Left and right - if means unequal reject tile
-    if not test_mean_equality(
-            tile[:,:half_width], tile[:,half_width:], sig_level):
+    if not test_mean_equality(tile[:, :half_width], tile[:, half_width:], sig_level):
         return _REJECT_TILE
 
     return _ACCEPT_TILE
@@ -140,7 +145,7 @@ def check_tile_means(tile, sig_level):
 
 def test_normality(array, test_statistic):
     """Test the hypothesis that the values in an array come from a normal distribution"""
-    k2, p = stats.normaltest(array.ravel(), nan_policy='omit')
+    k2, p = stats.normaltest(array.ravel(), nan_policy="omit")
 
     # If p < test_statistic -> reject null hypothesis -> values are not from a normal distribution
     if p < test_statistic:
@@ -153,7 +158,7 @@ def test_mean_equality(array_a, array_b, test_statistic):
     """Test the hypothesis that two arrays have an equal mean"""
 
     # T-test assuming equal variance
-    s, p = stats.ttest_ind(array_a.ravel(), array_b.ravel(), nan_policy='omit')
+    s, p = stats.ttest_ind(array_a.ravel(), array_b.ravel(), nan_policy="omit")
 
     # If p < test_statistic -> reject null hypothesis -> means are not equal
     if p < test_statistic:
@@ -165,7 +170,8 @@ def test_mean_equality(array_a, array_b, test_statistic):
 def est_mean_and_variance(img, tile_length, usable):
     """Calculate a mean and variance from a list of array indices"""
 
-    total_bg = np.vstack([img[u[1]:u[1]+tile_length,
-                                  u[0]:u[0]+tile_length] for u in usable])
+    total_bg = np.vstack(
+        [img[u[1] : u[1] + tile_length, u[0] : u[0] + tile_length] for u in usable]
+    )
 
-    return np.nanmean(total_bg, axis=None), np.nanvar(total_bg,axis=None)
+    return np.nanmean(total_bg, axis=None), np.nanvar(total_bg, axis=None)

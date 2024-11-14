@@ -1,15 +1,25 @@
 """High level processes for MTObjects."""
-# TODO rename?
+
+from ctypes import c_double, c_float
 
 import numpy as np
-from mtolib import _ctype_classes as ct
-from mtolib.preprocessing import preprocess_image
-from mtolib import maxtree
-from mtolib.tree_filtering import filter_tree, get_c_significant_nodes, init_double_filtering
-from mtolib.io_mto import generate_image, generate_parameters, read_fits_file, make_parser
-from mtolib.utils import time_function
-from ctypes import c_float, c_double
-from mtolib.postprocessing import relabel_segments
+
+from mto import _ctype_classes as ct
+from mto import maxtree
+from mto.io_mto import (
+    generate_image,
+    generate_parameters,
+    make_parser,
+    read_fits_file,
+)
+from mto.postprocessing import relabel_segments
+from mto.preprocessing import preprocess_image
+from mto.tree_filtering import (
+    filter_tree,
+    get_c_significant_nodes,
+    init_double_filtering,
+)
+from mto.utils import time_function
 
 
 def setup():
@@ -52,4 +62,9 @@ def max_tree_timed(img, params, maxtree_class):
 
 
 def build_max_tree(img, params, maxtree_class=maxtree.OriginalMaxTree):
-    return time_function(max_tree_timed, (img, params, maxtree_class), params.verbosity, 'create max tree')
+    return time_function(
+        max_tree_timed,
+        (img, params, maxtree_class),
+        params.verbosity,
+        "create max tree",
+    )
