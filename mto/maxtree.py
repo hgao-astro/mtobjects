@@ -52,7 +52,7 @@ class OriginalMaxTree(MaxTree):
         if params.d_type == ct.c_double:
             self.mt_lib = ct.CDLL(module_dir / "clib/maxtree_double.so")
         else:
-            self.mt_lib = ct.CDLL(module_dir / "/clib/maxtree.so")
+            self.mt_lib = ct.CDLL(module_dir / "clib/maxtree.so")
 
         # Create image object
         img_pointer = image.ravel().ctypes.data_as(ct.POINTER(params.d_type))
