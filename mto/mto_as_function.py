@@ -86,8 +86,6 @@ def mto(
                 ):
                     imgs.append(hdu.data)
                     hdrs.append(hdu.header)
-            imgs = [hdu.data for hdu in hdul[1:] if isinstance(hdu, fits.ImageHDU)]
-            hdrs = [hdu.header for hdu in hdul[1:] if isinstance(hdu, fits.ImageHDU)]
     with Pool(len(imgs)) as pool:
         res = pool.starmap(mto_pipeline_per_img, zip(imgs, [pars] * len(imgs)))
     segmaps, src_pars = zip(*res)
