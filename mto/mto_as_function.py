@@ -36,6 +36,7 @@ def mto(
     move_factor=0.5,
     min_distance=0.0,
     verbosity=0,
+    overwrite=False,
 ):
     pars = assemble_arguments(
         out=out,
@@ -93,7 +94,7 @@ def mto(
     hdus_out = [fits.PrimaryHDU(header=primary_hdr)]
     for segmap, hdr in zip(segmaps, hdrs):
         hdus_out.append(fits.ImageHDU(segmap, header=hdr))
-    fits.HDUList(hdus_out).writeto(out, overwrite=False)
+    fits.HDUList(hdus_out).writeto(out, overwrite=overwrite)
     # write src_pars to csv
     src_pars = np.concatenate(src_pars)
     np.savetxt(par_out, src_pars, delimiter=",", fmt="%s")
