@@ -1,8 +1,9 @@
 """Image pre-processing functions."""
 
+from warnings import catch_warnings, filterwarnings
+
+from astropy.convolution import Gaussian2DKernel, convolve
 import numpy as np
-from scipy import stats
-import scipy.ndimage.filters as filters
 
 from mto import background, utils
 
@@ -81,7 +82,11 @@ def truncate(img):
 
 def smooth_image(img, n=2):
     """Apply a gaussian smoothing function to an image."""
-    return filters.gaussian_filter(img, utils.fwhm_to_sigma(n))
+    kernel = Gaussian2DKernel(utils.fwhm_to_sigma(n))
+    with catch_warnings():
+        filterwarnings("ignore", ".*NaN values detected post convolution.*")
+        smoothed = convolve(img, kernel, preserve_nan=False, normalize_kernel=True, nan_treatment="interpolate")
+    return smoothed
 
 
 def replace_nans(img, value=np.inf):
