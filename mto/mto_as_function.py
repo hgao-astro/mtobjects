@@ -5,6 +5,7 @@ from pathlib import Path
 
 import numpy as np
 from astropy.io import fits
+from astropy.wcs import WCS
 
 from mto import _ctype_classes as ct
 from mto.mto_as_script import build_max_tree
@@ -60,7 +61,7 @@ def mto(
             else:
                 primary_hdr = None
             imgs = []
-            hdrs = []
+            wcses = []
             for ext in exts:
                 if isinstance(ext, str):
                     if ext not in hdul:
@@ -69,7 +70,7 @@ def mto(
                     if ext >= len(hdul):
                         raise ValueError(f"Extension {ext} not found in {path}.")
                 imgs.append(hdul[ext].data)
-                hdrs.append(hdul[ext].header)
+                wcses.append(WCS(hdul[ext].header))
     else:
         with fits.open(path) as hdul:
             if isinstance(hdul[0], fits.PrimaryHDU):
@@ -77,14 +78,14 @@ def mto(
             else:
                 primary_hdr = None
             imgs = []
-            hdrs = []
+            wcses = []
             for hdu in hdul:
                 if (
                     isinstance(hdu, (fits.PrimaryHDU, fits.ImageHDU))
                     and hdu.data is not None
                 ):
                     imgs.append(hdu.data)
-                    hdrs.append(hdu.header)
+                    wcses.append(WCS(hdu.header))
     if len(imgs) > 0:
         with Pool(len(imgs)) as pool:
             res = pool.starmap(mto_pipeline_per_img, zip(imgs, [pars] * len(imgs)))
@@ -98,7 +99,17 @@ def mto(
     # write segmaps to fits
     if out is not None:
         hdus_out = [fits.PrimaryHDU(header=primary_hdr)]
-        for segmap, hdr in zip(segmaps, hdrs):
+        for segmap, wcs in zip(segmaps, wcses):
+            hdr = wcs.to_header()
+            i16 = np.iinfo(np.int16)
+            i8 = np.iinfo(np.int8)
+            can_i8 = (segmap.min() >= i8.min) and (segmap.max() <= i8.max)
+            if can_i8:
+                segmap = segmap.astype(np.int8)
+            else:
+                can_i16 = (segmap.min() >= i16.min) and (segmap.max() <= i16.max)
+                if can_i16:
+                    segmap = segmap.astype(np.int16)
             hdus_out.append(fits.ImageHDU(segmap, header=hdr))
         fits.HDUList(hdus_out).writeto(out, overwrite=overwrite)
     # write src_pars to csv
