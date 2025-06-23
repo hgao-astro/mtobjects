@@ -26,8 +26,8 @@ def assemble_arguments(*args, **kwargs):
 def mto(
     path,
     exts=None,
-    out="out.fits",
-    par_out="par.csv",
+    out=None,
+    par_out=None,
     soft_bias=0,
     gain=-1,
     bg_mean=None,
@@ -39,8 +39,6 @@ def mto(
     overwrite=False,
 ):
     pars = assemble_arguments(
-        out=out,
-        par_out=par_out,
         soft_bias=soft_bias,
         gain=gain,
         bg_mean=bg_mean,
@@ -87,17 +85,28 @@ def mto(
                 ):
                     imgs.append(hdu.data)
                     hdrs.append(hdu.header)
-    with Pool(len(imgs)) as pool:
-        res = pool.starmap(mto_pipeline_per_img, zip(imgs, [pars] * len(imgs)))
-    segmaps, src_pars = zip(*res)
+    if len(imgs) > 0:
+        with Pool(len(imgs)) as pool:
+            res = pool.starmap(mto_pipeline_per_img, zip(imgs, [pars] * len(imgs)))
+            segmaps, src_pars = zip(*res)
+    else:
+        segmaps, src_pars = mto_pipeline_per_img(imgs[0], pars)
+        segmaps = [segmaps]
+        src_pars = [src_pars]
+    for segmap in segmaps:
+        segmap+= 1  # Ensure segment IDs start from 1
     # write segmaps to fits
-    hdus_out = [fits.PrimaryHDU(header=primary_hdr)]
-    for segmap, hdr in zip(segmaps, hdrs):
-        hdus_out.append(fits.ImageHDU(segmap, header=hdr))
-    fits.HDUList(hdus_out).writeto(out, overwrite=overwrite)
+    if out is not None:
+        hdus_out = [fits.PrimaryHDU(header=primary_hdr)]
+        for segmap, hdr in zip(segmaps, hdrs):
+            hdus_out.append(fits.ImageHDU(segmap, header=hdr))
+        fits.HDUList(hdus_out).writeto(out, overwrite=overwrite)
     # write src_pars to csv
-    src_pars = np.concatenate(src_pars)
-    np.savetxt(par_out, src_pars, delimiter=",", fmt="%s")
+    if par_out is not None:
+        par_out = Path(par_out).expanduser()
+        src_pars = np.concatenate(src_pars)
+        np.savetxt(par_out, src_pars, delimiter=",", fmt="%s")
+    return segmaps
 
 
 def mto_pipeline_per_img(img, pars):
