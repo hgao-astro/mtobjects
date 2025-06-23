@@ -94,7 +94,7 @@ def mto(
         segmaps = [segmaps]
         src_pars = [src_pars]
     for segmap in segmaps:
-        segmap+= 1  # Ensure segment IDs start from 1
+        segmap += 1  # Ensure segment IDs start from 1
     # write segmaps to fits
     if out is not None:
         hdus_out = [fits.PrimaryHDU(header=primary_hdr)]
@@ -136,18 +136,3 @@ def mto_pipeline_per_img(img, pars):
     img_ma = np.ma.array(img, mask=np.isnan(img))
     src_pars = get_image_parameters(img_ma, object_ids, sig_ancs, pars)
     return segmap, src_pars
-
-
-def is_mul_ext_fits(path):
-    """Check if a fits file has multiple image extensions."""
-    with fits.open(path) as hdul:
-        image_hdu_count = 0
-        for hdu in hdul:
-            if (
-                isinstance(hdu, (fits.PrimaryHDU, fits.ImageHDU))
-                and hdu.data is not None
-            ):
-                image_hdu_count += 1
-            if image_hdu_count > 1:
-                return True
-    return False
