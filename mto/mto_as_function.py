@@ -40,6 +40,7 @@ def mto(
     overwrite=False,
 ):
     pars = assemble_arguments(
+        par_out=par_out,
         soft_bias=soft_bias,
         gain=gain,
         bg_mean=bg_mean,
@@ -143,7 +144,10 @@ def mto_pipeline_per_img(img, pars):
     # Generate output files
     segmap = id_map.reshape(img.shape)
     object_ids = id_map.ravel()
-    # Mask NANs for parameter calculations
-    img_ma = np.ma.array(img, mask=np.isnan(img))
-    src_pars = get_image_parameters(img_ma, object_ids, sig_ancs, pars)
+    if pars.par_out is not None:
+        # Mask NANs for parameter calculations
+        img_ma = np.ma.array(img, mask=np.isnan(img))
+        src_pars = get_image_parameters(img_ma, object_ids, sig_ancs, pars)
+    else:
+        src_pars = ""
     return segmap, src_pars
