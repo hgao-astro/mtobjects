@@ -13,7 +13,6 @@ from mto.postprocessing import get_image_parameters, relabel_segments
 from mto.preprocessing import preprocess_image
 from mto.tree_filtering import (
     filter_tree,
-    get_c_significant_nodes,
     init_double_filtering,
 )
 
