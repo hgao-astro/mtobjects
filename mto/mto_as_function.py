@@ -27,7 +27,7 @@ def assemble_arguments(*args, **kwargs):
 def mto(
     path,
     exts=None,
-    out=None,
+    fits_out=None,
     par_out=None,
     soft_bias=0,
     gain=-1,
@@ -97,7 +97,7 @@ def mto(
     for segmap in segmaps:
         segmap += 1  # Ensure segment IDs start from 1
     # write segmaps to fits
-    if out is not None:
+    if fits_out is not None:
         hdus_out = [fits.PrimaryHDU(header=primary_hdr)]
         for segmap, wcs in zip(segmaps, wcses):
             hdr = wcs.to_header()
@@ -111,7 +111,7 @@ def mto(
                 if can_i16:
                     segmap = segmap.astype(np.int16)
             hdus_out.append(fits.ImageHDU(segmap, header=hdr))
-        fits.HDUList(hdus_out).writeto(out, overwrite=overwrite)
+        fits.HDUList(hdus_out).writeto(fits_out, overwrite=overwrite)
     # write src_pars to csv
     if par_out is not None:
         par_out = Path(par_out).expanduser()
