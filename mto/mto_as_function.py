@@ -86,7 +86,7 @@ def mto(
                 ):
                     imgs.append(hdu.data)
                     wcses.append(WCS(hdu.header))
-    if len(imgs) > 0:
+    if len(imgs) > 1:
         with Pool(len(imgs)) as pool:
             res = pool.starmap(mto_pipeline_per_img, zip(imgs, [pars] * len(imgs)))
             segmaps, src_pars = zip(*res)
