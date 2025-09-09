@@ -2,13 +2,13 @@
 
 from warnings import catch_warnings, filterwarnings
 
-from astropy.convolution import Gaussian2DKernel, convolve
 import numpy as np
+from astropy.convolution import Gaussian2DKernel, convolve
 
 from mto import background, utils
 
 
-def preprocess_image(img, p, gaussian_blur=True, n=2, nan_value=np.inf):
+def preprocess_image(img, p, gaussian_blur=True, nan_value=np.inf):
     """Estimate an image's background, subtract it, smooth and truncate."""
 
     # Estimate and subtract the background
@@ -17,7 +17,7 @@ def preprocess_image(img, p, gaussian_blur=True, n=2, nan_value=np.inf):
 
     # Smooth the image
     if gaussian_blur:
-        new_img = smooth_image(new_img, n)
+        new_img = smooth_image(new_img, p.fwhm)
 
     # Remove negative values and NANs
     new_img = replace_nans(truncate(new_img), nan_value)
@@ -29,7 +29,6 @@ def estimate_background(img, p):
     """Estimate background mean & variance"""
 
     if p.bg_mean is None or p.bg_variance < 0:
-
         if np.isnan(img).any():
             if p.verbosity > 0:
                 print(
@@ -85,7 +84,13 @@ def smooth_image(img, n=2):
     kernel = Gaussian2DKernel(utils.fwhm_to_sigma(n))
     with catch_warnings():
         filterwarnings("ignore", ".*NaN values detected post convolution.*")
-        smoothed = convolve(img, kernel, preserve_nan=False, normalize_kernel=True, nan_treatment="interpolate")
+        smoothed = convolve(
+            img,
+            kernel,
+            preserve_nan=False,
+            normalize_kernel=True,
+            nan_treatment="interpolate",
+        )
     return smoothed
 
 

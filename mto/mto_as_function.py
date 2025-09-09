@@ -30,6 +30,7 @@ def mto(
     par_out=None,
     soft_bias=0,
     gain=-1,
+    fwhm=2,
     bg_mean=None,
     bg_variance=-1,
     alpha=1e-6,
@@ -43,6 +44,7 @@ def mto(
         soft_bias=soft_bias,
         gain=gain,
         bg_mean=bg_mean,
+        fwhm=fwhm,
         bg_variance=bg_variance,
         alpha=alpha,
         move_factor=move_factor,
@@ -129,7 +131,7 @@ def mto_pipeline_per_img(img, pars):
     # Initialise CTypes classes
     ct.init_classes(pars.d_type)
 
-    processed_img = preprocess_image(img, pars, n=2)
+    processed_img = preprocess_image(img, pars)
 
     # Build a max tree
     mt = build_max_tree(processed_img, pars)
